@@ -15,7 +15,7 @@ st.title("🌿 Cannadvis BETA")
 # Load data
 @st.cache_data
 def load_data():
-    df = pd.read_csv("C:/Users/Scarl/Desktop/cannadv/strains.csv")
+    df = pd.read_csv("strains.csv")
     for col in ['thc', 'cbd']:
         df[col] = pd.to_numeric(df[col], errors='coerce')
     df['effects'] = df['effects'].fillna('')
