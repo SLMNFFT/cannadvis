@@ -103,7 +103,8 @@ if search:
             with cols[0]:
                 # Load image from dataset or fallback to online
                 image_url = row["image"]
-                if not image_url.startswith("http"):
+                if not image_url or not image_url.startswith("http"):
+:
                     image_url = fetch_image_online(row["name"]) or ""
 
                 if image_url:
