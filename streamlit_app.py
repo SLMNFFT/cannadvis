@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from duckduckgo_search import ddg_images
+from duckduckgo_search import DDGS
+
 
 
 st.set_page_config(page_title="Cannabis Strain Explorer", layout="wide")
