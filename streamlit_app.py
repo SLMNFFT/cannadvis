@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from duckduckgo_search import ddg_images
 
 st.set_page_config(page_title="Cannabis Strain Explorer", layout="wide")
 st.title("🌿 Cannadvis BETA")
@@ -16,7 +17,18 @@ def load_data():
     df['type'] = df['type'].fillna('Unknown')
     return df
 
-# Preload data just to populate filter dropdowns (lazy filters still applied later)
+# --- Function to search image online ---
+@st.cache_data(show_spinner=False)
+def fetch_image_online(query):
+    try:
+        results = ddg_images(query + " cannabis strain", max_results=1)
+        if results:
+            return results[0]["image"]
+    except Exception:
+        return None
+    return None
+
+# Preload data just to populate filter dropdowns
 try:
     df_preview = load_data()
 except:
@@ -87,8 +99,13 @@ if search:
             st.markdown("----")
             cols = st.columns([1, 2])
             with cols[0]:
-                if isinstance(row["image"], str) and row["image"].startswith("http"):
-                    st.image(row["image"], width=200)
+                # Load image from dataset or fallback to online
+                image_url = row["image"]
+                if not image_url.startswith("http"):
+                    image_url = fetch_image_online(row["name"]) or ""
+
+                if image_url:
+                    st.image(image_url, width=200)
                 else:
                     st.write("🖼️ No image available.")
 
@@ -104,6 +121,6 @@ if search:
                 st.markdown(f"### {row['name']}")
                 st.markdown(row.get('description', 'No description available.'))
 
-    st.caption("📄 Powered by `strains.csv` | Built with ❤️ in Streamlit")
+    st.caption("📄 Powered by `strains.csv` + DuckDuckGo | Built with ❤️ in Streamlit")
 else:
     st.info("Use the filters in the sidebar and click **Search** to explore cannabis strains.")
