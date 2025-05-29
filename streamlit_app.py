@@ -1,17 +1,16 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import os
 
 st.set_page_config(page_title="Cannabis Strain Explorer", layout="wide")
 
+
+
 st.title("🌿 Cannadvis BETA")
 
-# Show custom rasta emoji next to title
-cols = st.columns([1, 10])
-with cols[0]:
-    st.image("rasta_emoji.png", width=50)
-with cols[1]:
-    st.title("🌿 Cannabis Strain Explorer")
+
+
 
 # Load data
 @st.cache_data
@@ -58,10 +57,9 @@ filtered_df = filtered_df[
     (filtered_df["thc"].fillna(0.0) <= thc_range[1])
 ]
 
-# --- Interactive Effects by Type diagram moved here, top of page ---
+# --- Interactive Effects by Type diagram ---
 st.subheader("📊 Interactive Effects Distribution by Strain Type")
 
-# Explode effects for filtered strains
 effects_expanded = (
     filtered_df[["type", "effects"]]
     .assign(effects=filtered_df["effects"].str.split(", "))
@@ -72,7 +70,6 @@ effects_expanded = effects_expanded.dropna(subset=["effects"])
 if effects_expanded.empty:
     st.info("No effect data available for selected filters.")
 else:
-    # Count effects grouped by type and effect
     effect_counts = (
         effects_expanded.groupby(["type", "effects"])
         .size()
@@ -80,7 +77,6 @@ else:
         .sort_values(by="count", ascending=False)
     )
 
-    # Plotly bar chart
     fig = px.bar(
         effect_counts,
         x="effects",
