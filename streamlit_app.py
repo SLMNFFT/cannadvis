@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 from duckduckgo_search import ddg_images
 
+
 st.set_page_config(page_title="Cannabis Strain Explorer", layout="wide")
 st.title("🌿 Cannadvis BETA")
 
