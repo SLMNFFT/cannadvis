@@ -3,8 +3,6 @@ import pandas as pd
 import plotly.express as px
 from duckduckgo_search import DDGS
 
-
-
 st.set_page_config(page_title="Cannabis Strain Explorer", layout="wide")
 st.title("🌿 Cannadvis BETA")
 
@@ -23,9 +21,12 @@ def load_data():
 @st.cache_data(show_spinner=False)
 def fetch_image_online(query):
     try:
-        results = ddg_images(query + " cannabis strain", max_results=1)
-        if results:
-            return results[0]["image"]
+        with DDGS() as ddgs:
+            results = ddgs.images(query + " cannabis strain", max_results=1)
+            for r in results:
+                image_url = r.get("image")
+                if image_url and image_url.startswith("http"):
+                    return image_url
     except Exception:
         return None
     return None
@@ -33,7 +34,7 @@ def fetch_image_online(query):
 # Preload data just to populate filter dropdowns
 try:
     df_preview = load_data()
-except:
+except Exception:
     df_preview = pd.DataFrame(columns=["name", "type", "effects", "thc"])
 
 strain_names = ["Any"] + sorted(df_preview["name"].dropna().unique().tolist())
@@ -104,7 +105,6 @@ if search:
                 # Load image from dataset or fallback to online
                 image_url = row["image"]
                 if not image_url or not image_url.startswith("http"):
-:
                     image_url = fetch_image_online(row["name"]) or ""
 
                 if image_url:
