@@ -4,7 +4,7 @@ import plotly.express as px
 from duckduckgo_search import DDGS
 
 st.set_page_config(page_title="Cannabis Strain Explorer", layout="wide")
-st.title("🌿 Cannadvis BETA")
+st.title("🌇 Cannadvis BETA")
 
 # --- Load data only when needed ---
 @st.cache_data
