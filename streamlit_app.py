@@ -15,6 +15,10 @@ def load_data():
     df['effects'] = df['effects'].fillna('')
     df['image'] = df['image'].fillna('')
     df['type'] = df['type'].fillna('Unknown')
+    for col in ['flavor', 'ailment', 'breeder', 'location']:
+        if col not in df.columns:
+            df[col] = ''
+        df[col] = df[col].fillna('')
     return df
 
 # --- Function to search image online ---
@@ -42,11 +46,20 @@ strain_types = ["Any"] + sorted(df_preview["type"].dropna().unique().tolist())
 all_effects = df_preview["effects"].str.split(", ").explode().dropna().unique()
 effect_choices = ["Any"] + sorted(all_effects)
 
+flavors = ["Any"] + sorted(df_preview["flavor"].str.split(", ").explode().dropna().unique())
+ailments = ["Any"] + sorted(df_preview["ailment"].str.split(", ").explode().dropna().unique())
+breeders = ["Any"] + sorted(df_preview["breeder"].dropna().unique())
+locations = ["Any"] + sorted(df_preview["location"].dropna().unique())
+
 # --- Sidebar filters ---
 st.sidebar.header("🔎 Filter Strains")
 selected_name = st.sidebar.selectbox("Strain Name", strain_names, key="strain_name")
 selected_type = st.sidebar.selectbox("Strain Type", strain_types, key="strain_type")
 selected_effect = st.sidebar.selectbox("Desired Effect", effect_choices, key="effect")
+selected_flavor = st.sidebar.selectbox("Flavor", flavors, key="flavor")
+selected_ailment = st.sidebar.selectbox("Ailment", ailments, key="ailment")
+selected_breeder = st.sidebar.selectbox("Breeder", breeders, key="breeder")
+selected_location = st.sidebar.selectbox("Location", locations, key="location")
 thc_range = st.sidebar.slider("THC % Range", 0.0, 40.0, (0.0, 25.0), key="thc_slider")
 
 search = st.sidebar.button("🔍 Search")
@@ -62,6 +75,15 @@ if search:
         filtered_df = filtered_df[filtered_df["type"] == st.session_state.strain_type]
     if st.session_state.effect != "Any":
         filtered_df = filtered_df[filtered_df["effects"].str.contains(st.session_state.effect, case=False, na=False)]
+    if st.session_state.flavor != "Any":
+        filtered_df = filtered_df[filtered_df["flavor"].str.contains(st.session_state.flavor, case=False, na=False)]
+    if st.session_state.ailment != "Any":
+        filtered_df = filtered_df[filtered_df["ailment"].str.contains(st.session_state.ailment, case=False, na=False)]
+    if st.session_state.breeder != "Any":
+        filtered_df = filtered_df[filtered_df["breeder"] == st.session_state.breeder]
+    if st.session_state.location != "Any":
+        filtered_df = filtered_df[filtered_df["location"] == st.session_state.location]
+
     filtered_df = filtered_df[
         (filtered_df["thc"].fillna(0.0) >= st.session_state.thc_slider[0]) &
         (filtered_df["thc"].fillna(0.0) <= st.session_state.thc_slider[1])
@@ -119,6 +141,9 @@ if search:
                 st.markdown(f"**Type**: {row['type']}")
                 st.markdown(f"**Effects**: {row['effects']}")
                 st.markdown(f"**Flavor**: {row.get('flavor', 'N/A')}")
+                st.markdown(f"**Ailments**: {row.get('ailment', 'N/A')}")
+                st.markdown(f"**Breeder**: {row.get('breeder', 'N/A')}")
+                st.markdown(f"**Location**: {row.get('location', 'N/A')}")
 
             with cols[1]:
                 st.markdown(f"### {row['name']}")
