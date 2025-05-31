@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from duckduckgo_search import DDGS
+import os
 
 st.set_page_config(page_title="Cannabis Strain Explorer", layout="wide")
 st.title("🌇 Cannadvis BETA")
@@ -102,7 +103,6 @@ def main():
         elif sort_by == "Highest CBD":
             filtered_df = filtered_df.sort_values(by="cbd", ascending=False)
 
-        # Effects Chart
         st.subheader("📊 Effects Distribution by Strain Type")
         expanded = filtered_df[["type", "effects"]].assign(effects=filtered_df["effects"].str.split(", ")).explode("effects").dropna()
         if not expanded.empty:
@@ -122,7 +122,6 @@ def main():
         else:
             st.info("No effect data available.")
 
-        # Matching strains
         st.subheader("🧾 Matching Strains")
         if filtered_df.empty:
             st.warning("No matching strains found.")
@@ -132,13 +131,16 @@ def main():
                 cols = st.columns([1, 3])
 
                 with cols[0]:
-                    image_url = row["image"]
-                    if not image_url or not image_url.startswith("http"):
-                        image_url = fetch_image_online(row["name"]) or ""
-                    if image_url:
-                        st.image(image_url, width=150)
+                    image_path = row["image"]
+                    if image_path and image_path.lower().endswith(".png") and os.path.exists(image_path):
+                        st.image(image_path, caption=row["name"], use_column_width=True)
                     else:
-                        st.write("🖼️ No image available.")
+                        image_url = fetch_image_online(row["name"]) or ""
+                        if image_url:
+                            st.image(image_url, caption=row["name"], width=150)
+                        else:
+                            st.write("🖼️ No image available.")
+
                     st.markdown(f"**Type**: {row['type']}")
                     st.markdown(f"**Effects**: {row['effects']}")
                     st.markdown(f"**Flavor**: {row.get('flavor', 'N/A')}")
@@ -185,7 +187,7 @@ def main():
                             ],
                         }
                     ))
-                    st.plotly_chart(thc_fig, use_container_width=True, key=f"thc_gauge_{idx}")
+                    st.plotly_chart(thc_fig, use_container_width=True)
 
                     # CBD Gauge
                     cbd_fig = go.Figure(go.Indicator(
@@ -204,9 +206,8 @@ def main():
                             ],
                         }
                     ))
-                    st.plotly_chart(cbd_fig, use_container_width=True, key=f"cbd_gauge_{idx}")
+                    st.plotly_chart(cbd_fig, use_container_width=True)
 
-        # Sidebar: Favorites
         st.sidebar.header("❤️ Favorites")
         if st.session_state.favorites:
             for fav_strain in sorted(st.session_state.favorites):
