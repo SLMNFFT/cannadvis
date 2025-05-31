@@ -46,6 +46,12 @@ def save_note(strain_name, note):
     st.session_state.notes[strain_name] = note
 
 def main():
+    # Initialize session state variables
+    if "favorites" not in st.session_state:
+        st.session_state.favorites = set()
+    if "notes" not in st.session_state:
+        st.session_state.notes = {}
+
     try:
         df_preview = load_data()
     except Exception:
@@ -75,16 +81,10 @@ def main():
     sort_by = st.sidebar.selectbox("Sort by Potency", ["None", "Highest THC", "Highest CBD"])
     search = st.sidebar.button("🔍 Search")
 
-    # Favorites & Notes state management with session_state
-    if "favorites" not in st.session_state:
-        st.session_state.favorites = set()
-    if "notes" not in st.session_state:
-        st.session_state.notes = {}
-
     if search:
         df = load_data()
-
         filtered_df = df.copy()
+
         if selected_name != "Any":
             filtered_df = filtered_df[filtered_df["name"] == selected_name]
         if selected_type != "Any":
@@ -141,7 +141,7 @@ def main():
         else:
             for idx, row in filtered_df.iterrows():
                 st.markdown("----")
-                cols = st.columns([1, 3])  # left smaller for image + metadata + favorites/notes, right bigger for text + diagrams
+                cols = st.columns([1, 3])
 
                 with cols[0]:
                     # Image
@@ -232,10 +232,10 @@ def main():
                     ))
                     st.plotly_chart(cbd_fig, use_container_width=True)
 
-        # Show favorites list somewhere at bottom or sidebar
+        # Favorites list in sidebar
         st.sidebar.header("❤️ Favorites")
         if st.session_state.favorites:
-            for fav_strain in st.session_state.favorites:
+            for fav_strain in sorted(st.session_state.favorites):
                 st.sidebar.write(fav_strain)
         else:
             st.sidebar.write("No favorites yet.")
