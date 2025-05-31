@@ -46,7 +46,6 @@ def save_note(strain_name, note):
     st.session_state.notes[strain_name] = note
 
 def main():
-    # Initialize session state variables
     if "favorites" not in st.session_state:
         st.session_state.favorites = set()
     if "notes" not in st.session_state:
@@ -110,16 +109,12 @@ def main():
         elif sort_by == "Highest CBD":
             filtered_df = filtered_df.sort_values(by="cbd", ascending=False)
 
+        # Effects Chart
         st.subheader("📊 Effects Distribution by Strain Type")
         expanded = filtered_df[["type", "effects"]].assign(effects=filtered_df["effects"].str.split(", ")).explode("effects")
         expanded = expanded.dropna()
         if not expanded.empty:
-            counts = (
-                expanded.groupby(["type", "effects"])
-                .size()
-                .reset_index(name="count")
-                .sort_values(by="count", ascending=False)
-            )
+            counts = expanded.groupby(["type", "effects"]).size().reset_index(name="count").sort_values(by="count", ascending=False)
             fig = px.bar(
                 counts,
                 x="effects",
@@ -135,6 +130,7 @@ def main():
         else:
             st.info("No effect data available.")
 
+        # Matching strains
         st.subheader("🧾 Matching Strains")
         if filtered_df.empty:
             st.warning("No matching strains found.")
@@ -144,7 +140,6 @@ def main():
                 cols = st.columns([1, 3])
 
                 with cols[0]:
-                    # Image
                     image_url = row["image"]
                     if not image_url or not image_url.startswith("http"):
                         image_url = fetch_image_online(row["name"]) or ""
@@ -153,7 +148,6 @@ def main():
                     else:
                         st.write("🖼️ No image available.")
 
-                    # Metadata
                     st.markdown(f"**Type**: {row['type']}")
                     st.markdown(f"**Effects**: {row['effects']}")
                     st.markdown(f"**Flavor**: {row.get('flavor', 'N/A')}")
@@ -161,22 +155,12 @@ def main():
                     st.markdown(f"**Breeder**: {row.get('breeder', 'N/A')}")
                     st.markdown(f"**Location**: {row.get('location', 'N/A')}")
 
-                    # Favorites button
                     is_fav = row['name'] in st.session_state.favorites
-                    if st.button(
-                        ("❤️ Remove from Favorites" if is_fav else "♡ Add to Favorites"),
-                        key=f"fav_{idx}",
-                    ):
+                    if st.button("❤️ Remove from Favorites" if is_fav else "♡ Add to Favorites", key=f"fav_{idx}"):
                         toggle_favorite(row['name'])
                         st.experimental_rerun()
 
-                    # Notes
-                    note = st.text_area(
-                        "Your Notes",
-                        value=st.session_state.notes.get(row['name'], ""),
-                        key=f"note_{idx}",
-                        placeholder="Write your notes here...",
-                    )
+                    note = st.text_area("Your Notes", value=st.session_state.notes.get(row['name'], ""), key=f"note_{idx}")
                     if st.button("Save Note", key=f"save_note_{idx}"):
                         save_note(row['name'], note)
                         st.success("Note saved!")
@@ -189,16 +173,18 @@ def main():
                     else:
                         st.info("No description available.")
 
-                    # YouTube embedding (if valid URL present)
                     yt_url = row.get("youtube", "")
                     if yt_url.startswith("https://www.youtube.com/") or yt_url.startswith("https://youtu.be/"):
                         st.video(yt_url)
 
+                    thc_val = row["thc"] if pd.notna(row["thc"]) else 0
+                    cbd_val = row["cbd"] if pd.notna(row["cbd"]) else 0
+
                     thc_fig = go.Figure(go.Indicator(
                         mode="gauge+number",
-                        value=row["thc"] or 0,
-                        domain={'x': [0, 1], 'y': [0, 1]},
+                        value=thc_val,
                         title={'text': "THC %"},
+                        domain={'x': [0, 1], 'y': [0, 1]},
                         gauge={
                             'axis': {'range': [0, 40]},
                             'bar': {'color': "green"},
@@ -214,9 +200,9 @@ def main():
 
                     cbd_fig = go.Figure(go.Indicator(
                         mode="gauge+number",
-                        value=row["cbd"] or 0,
-                        domain={'x': [0, 1], 'y': [0, 1]},
+                        value=cbd_val,
                         title={'text': "CBD %"},
+                        domain={'x': [0, 1], 'y': [0, 1]},
                         gauge={
                             'axis': {'range': [0, 20]},
                             'bar': {'color': "blue"},
@@ -230,14 +216,13 @@ def main():
                     ))
                     st.plotly_chart(cbd_fig, use_container_width=True, key=f"cbd_gauge_{idx}")
 
-        # Favorites list in sidebar
+        # Sidebar: Favorites
         st.sidebar.header("❤️ Favorites")
         if st.session_state.favorites:
             for fav_strain in sorted(st.session_state.favorites):
                 st.sidebar.write(fav_strain)
         else:
             st.sidebar.write("No favorites yet.")
-
     else:
         st.info("Please use the sidebar filters and click 🔍 Search to find strains.")
 
