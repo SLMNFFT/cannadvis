@@ -158,6 +158,7 @@ def main():
 
                 with cols[1]:
                     st.markdown(f"### {row['name']}")
+                    st.markdown(f"[🛒 Buy '{row['name']}' on GreenMedical](https://greenmedical.health/de/cannabis) {{:target='_blank'}}", unsafe_allow_html=True)
                     desc = row.get("description", "")
                     st.write(desc if desc else "No description available.")
 
