@@ -3,9 +3,51 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from duckduckgo_search import DDGS
-import os
 
+# Page config
 st.set_page_config(page_title="Cannabis Strain Explorer", layout="wide")
+
+# Inject custom CSS for background and UI styling
+st.markdown("""
+    <style>
+    body {
+        background-image: url('https://images.unsplash.com/photo-1610563166159-0a89c0fd09a1'); /* Replace with your own */
+        background-size: cover;
+        background-attachment: fixed;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+    .stApp {
+        background-color: rgba(255, 255, 255, 0.85);
+        border-radius: 12px;
+        padding: 2rem;
+        margin: 1rem;
+    }
+    .block-container {
+        padding-top: 2rem;
+    }
+    h1 {
+        color: #2E8B57;
+        text-align: center;
+    }
+    .stButton > button {
+        border-radius: 8px;
+        background-color: #228B22;
+        color: white;
+        font-weight: bold;
+        padding: 0.5em 1em;
+    }
+    .stTextArea textarea {
+        background-color: #f5fff5;
+        border: 1px solid #a0cfa0;
+        border-radius: 8px;
+    }
+    .stSidebar {
+        background-color: rgba(255, 255, 255, 0.9);
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 st.title("🌇 Cannadvis BETA")
 
 @st.cache_data
@@ -63,7 +105,6 @@ def main():
     all_breeders = sorted(df_preview["breeder"].dropna().unique())
     all_locations = sorted(df_preview["location"].dropna().unique())
 
-    # Sidebar filters
     st.sidebar.header("🔎 Filter Strains")
     selected_name = st.sidebar.selectbox("Strain Name", strain_names)
     selected_type = st.sidebar.selectbox("Strain Type", strain_types)
@@ -131,16 +172,13 @@ def main():
                 cols = st.columns([1, 3])
 
                 with cols[0]:
-                    image_path = row["image"]
-                    if image_path and image_path.lower().endswith(".png") and os.path.exists(image_path):
-                        st.image(image_path, caption=row["name"], use_column_width=True)
-                    else:
+                    image_url = row["image"]
+                    if not image_url or not image_url.startswith("http"):
                         image_url = fetch_image_online(row["name"]) or ""
-                        if image_url:
-                            st.image(image_url, caption=row["name"], width=150)
-                        else:
-                            st.write("🖼️ No image available.")
-
+                    if image_url:
+                        st.image(image_url, width=150)
+                    else:
+                        st.write("🖼️ No image available.")
                     st.markdown(f"**Type**: {row['type']}")
                     st.markdown(f"**Effects**: {row['effects']}")
                     st.markdown(f"**Flavor**: {row.get('flavor', 'N/A')}")
@@ -167,6 +205,7 @@ def main():
                     if yt_url.startswith("https://www.youtube.com/") or yt_url.startswith("https://youtu.be/"):
                         st.video(yt_url)
 
+                    # Gauges
                     thc_val = row["thc"] if pd.notna(row["thc"]) else 0
                     cbd_val = row["cbd"] if pd.notna(row["cbd"]) else 0
 
@@ -187,7 +226,7 @@ def main():
                             ],
                         }
                     ))
-                    st.plotly_chart(thc_fig, use_container_width=True)
+                    st.plotly_chart(thc_fig, use_container_width=True, key=f"thc_gauge_{idx}")
 
                     # CBD Gauge
                     cbd_fig = go.Figure(go.Indicator(
@@ -206,7 +245,7 @@ def main():
                             ],
                         }
                     ))
-                    st.plotly_chart(cbd_fig, use_container_width=True)
+                    st.plotly_chart(cbd_fig, use_container_width=True, key=f"cbd_gauge_{idx}")
 
         st.sidebar.header("❤️ Favorites")
         if st.session_state.favorites:
