@@ -18,7 +18,7 @@ st.markdown("""
         background-repeat: no-repeat;
     }
     .stApp {
-        background-color: rgba(255, 255, 255, 0.85);
+        background-color: rgba(255, 255, 255, 0.5);
         border-radius: 12px;
         padding: 2rem;
         margin: 1rem;
