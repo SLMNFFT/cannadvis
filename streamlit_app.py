@@ -7,6 +7,68 @@ from duckduckgo_search import DDGS
 st.set_page_config(page_title="Cannabis Strain Explorer", layout="wide")
 st.title("🌇 Cannadvis BETA")
 
+# 🌍 UI Translations
+translations = {
+    "en": {
+        "filter": "🔎 Filter Strains",
+        "strain_name": "Strain Name",
+        "strain_type": "Strain Type",
+        "desired_effects": "Desired Effects",
+        "flavors": "Flavors",
+        "ailments": "Ailments",
+        "breeders": "Breeders",
+        "locations": "Locations",
+        "thc_range": "THC % Range",
+        "sort_by": "Sort by Potency",
+        "search": "🔍 Search",
+        "no_results": "No matching strains found.",
+        "matching_strains": "🧾 Matching Strains",
+        "add_favorite": "♡ Add to Favorites",
+        "remove_favorite": "❤️ Remove from Favorites",
+        "your_notes": "Your Notes",
+        "save_note": "Save Note",
+        "note_saved": "Note saved!",
+        "favorites": "❤️ Favorites",
+        "no_favorites": "No favorites yet.",
+        "thc_label": "THC %",
+        "cbd_label": "CBD %",
+        "effects_chart_title": "📊 Effects Distribution by Strain Type",
+        "no_effect_data": "No effect data available.",
+        "no_image": "🖼️ No image available.",
+        "no_desc": "No description available.",
+        "choose_lang": "🌐 Choose Language"
+    },
+    "fr": {
+        "filter": "🔎 Filtrer les variétés",
+        "strain_name": "Nom de la variété",
+        "strain_type": "Type de variété",
+        "desired_effects": "Effets recherchés",
+        "flavors": "Saveurs",
+        "ailments": "Maux soulagés",
+        "breeders": "Éleveurs",
+        "locations": "Origines",
+        "thc_range": "Plage de THC %",
+        "sort_by": "Trier par puissance",
+        "search": "🔍 Rechercher",
+        "no_results": "Aucune variété correspondante trouvée.",
+        "matching_strains": "🧾 Variétés correspondantes",
+        "add_favorite": "♡ Ajouter aux favoris",
+        "remove_favorite": "❤️ Retirer des favoris",
+        "your_notes": "Vos notes",
+        "save_note": "Enregistrer la note",
+        "note_saved": "Note enregistrée !",
+        "favorites": "❤️ Favoris",
+        "no_favorites": "Aucun favori pour l’instant.",
+        "thc_label": "THC %",
+        "cbd_label": "CBD %",
+        "effects_chart_title": "📊 Répartition des effets par type de variété",
+        "no_effect_data": "Aucune donnée sur les effets disponible.",
+        "no_image": "🖼️ Aucune image disponible.",
+        "no_desc": "Pas de description disponible.",
+        "choose_lang": "🌐 Choisir la langue"
+    }
+}
+
 @st.cache_data
 def load_data():
     df = pd.read_csv("strains.csv")
