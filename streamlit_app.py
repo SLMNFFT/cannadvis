@@ -102,8 +102,7 @@ if search:
     if selected_type != "Any":
         filtered_df = filtered_df[filtered_df["type"] == selected_type]
     if selected_effect != "Any":
-        filtered_df = filtered_df["effects"].str.contains(selected_effect, case=False, na=False)
-        filtered_df = filtered_df[filtered_df["effects"].str.contains(selected_effect, case=False, na=False)]
+    filtered_df = filtered_df[filtered_df["effects"].str.contains(selected_effect, case=False, na=False)]
     if selected_flavor != "Any":
         filtered_df = filtered_df[filtered_df["flavor"].str.contains(selected_flavor, case=False, na=False)]
     if selected_ailment != "Any":
