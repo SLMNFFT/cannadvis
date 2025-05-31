@@ -212,7 +212,6 @@ def main():
                     ))
                     st.plotly_chart(thc_fig, use_container_width=True, key=f"thc_gauge_{idx}")
 
-                    # CBD gauge
                     cbd_fig = go.Figure(go.Indicator(
                         mode="gauge+number",
                         value=row["cbd"] or 0,
