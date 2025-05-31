@@ -139,54 +139,96 @@ if search:
         st.warning("No matching strains found.")
     else:
         for idx, row in filtered_df.iterrows():
-            st.markdown("----")
-            cols = st.columns([1, 3])  # Left side smaller for images + gauges, right side for name + description
+    st.markdown("----")
+    cols = st.columns([1, 3])  # left smaller for image + metadata + favorites/notes, right bigger for text + diagrams
 
-            with cols[0]:
-                # Image
-                image_url = row["image"]
-                if not image_url or not image_url.startswith("http"):
-                    image_url = fetch_image_online(row["name"]) or ""
-                if image_url:
-                    st.image(image_url, width=150)
-                else:
-                    st.write("🖼️ No image available.")
+    with cols[0]:
+        # Image
+        image_url = row["image"]
+        if not image_url or not image_url.startswith("http"):
+            image_url = fetch_image_online(row["name"]) or ""
+        if image_url:
+            st.image(image_url, width=150)
+        else:
+            st.write("🖼️ No image available.")
 
-                # THC gauge
-                thc_fig = go.Figure(go.Indicator(
-                    mode="gauge+number",
-                    value=row["thc"] or 0,
-                    domain={'x': [0, 1], 'y': [0, 1]},
-                    title={'text': "THC %"},
-                    gauge={
-                        'axis': {'range': [0, 40]},
-                        'bar': {'color': "green"},
-                        'steps': [
-                            {'range': [0, 10], 'color': "#e6ffe6"},
-                            {'range': [10, 25], 'color': "#b3ffb3"},
-                            {'range': [25, 40], 'color': "#66ff66"}
-                        ],
-                    }
-                ))
-                st.plotly_chart(thc_fig, use_container_width=True, key=f"thc_{idx}")
+        # Metadata
+        st.markdown(f"**Type**: {row['type']}")
+        st.markdown(f"**Effects**: {row['effects']}")
+        st.markdown(f"**Flavor**: {row.get('flavor', 'N/A')}")
+        st.markdown(f"**Ailments**: {row.get('ailment', 'N/A')}")
+        st.markdown(f"**Breeder**: {row.get('breeder', 'N/A')}")
+        st.markdown(f"**Location**: {row.get('location', 'N/A')}")
 
-                # CBD gauge
-                cbd_fig = go.Figure(go.Indicator(
-                    mode="gauge+number",
-                    value=row["cbd"] or 0,
-                    domain={'x': [0, 1], 'y': [0, 1]},
-                    title={'text': "CBD %"},
-                    gauge={
-                        'axis': {'range': [0, 20]},
-                        'bar': {'color': "blue"},
-                        'steps': [
-                            {'range': [0, 5], 'color': "#e6f0ff"},
-                            {'range': [5, 15], 'color': "#99c2ff"},
-                            {'range': [15, 20], 'color': "#3399ff"}
-                        ],
-                    }
-                ))
-                st.plotly_chart(cbd_fig, use_container_width=True, key=f"cbd_{idx}")
+        # Favorites button
+        is_fav = row['name'] in st.session_state.favorites
+        if st.button(
+            ("❤️ Remove from Favorites" if is_fav else "♡ Add to Favorites"),
+            key=f"fav_{idx}",
+        ):
+            toggle_favorite(row['name'])
+            st.experimental_rerun()
+
+        # Notes
+        note = st.text_area(
+            "Your Notes",
+            value=st.session_state.notes.get(row['name'], ""),
+            key=f"note_{idx}",
+            placeholder="Write your notes here...",
+        )
+        if st.button("Save Note", key=f"save_note_{idx}"):
+            save_note(row['name'], note)
+            st.success("Note saved!")
+
+    with cols[1]:
+        st.markdown(f"### {row['name']}")
+        desc = row.get("description", "")
+        if desc:
+            st.write(desc)
+        else:
+            st.info("No description available.")
+
+        # YouTube embedding (if valid URL present)
+        yt_url = row.get("youtube", "")
+        if yt_url.startswith("https://www.youtube.com/") or yt_url.startswith("https://youtu.be/"):
+            st.video(yt_url)
+
+        # Move THC gauge under description + YouTube
+        thc_fig = go.Figure(go.Indicator(
+            mode="gauge+number",
+            value=row["thc"] or 0,
+            domain={'x': [0, 1], 'y': [0, 1]},
+            title={'text': "THC %"},
+            gauge={
+                'axis': {'range': [0, 40]},
+                'bar': {'color': "green"},
+                'steps': [
+                    {'range': [0, 10], 'color': "#e6ffe6"},
+                    {'range': [10, 25], 'color': "#b3ffb3"},
+                    {'range': [25, 40], 'color': "#66ff66"}
+                ],
+            }
+        ))
+        st.plotly_chart(thc_fig, use_container_width=True, key=f"thc_{idx}")
+
+        # Move CBD gauge under THC gauge
+        cbd_fig = go.Figure(go.Indicator(
+            mode="gauge+number",
+            value=row["cbd"] or 0,
+            domain={'x': [0, 1], 'y': [0, 1]},
+            title={'text': "CBD %"},
+            gauge={
+                'axis': {'range': [0, 20]},
+                'bar': {'color': "blue"},
+                'steps': [
+                    {'range': [0, 5], 'color': "#e6f0ff"},
+                    {'range': [5, 15], 'color': "#99c2ff"},
+                    {'range': [15, 20], 'color': "#3399ff"}
+                ],
+            }
+        ))
+        st.plotly_chart(cbd_fig, use_container_width=True, key=f"cbd_{idx}")
+
 
                 # Metadata
                 st.markdown(f"**Type**: {row['type']}")
