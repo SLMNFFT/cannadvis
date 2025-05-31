@@ -58,25 +58,22 @@ def main():
 
     strain_names = ["Any"] + sorted(df_preview["name"].dropna().unique().tolist())
     strain_types = ["Any"] + sorted(df_preview["type"].dropna().unique().tolist())
-    all_effects = df_preview["effects"].str.split(", ").explode().dropna().unique()
-    effect_choices = ["Any"] + sorted(all_effects)
-
-    flavors = ["Any"] + sorted(df_preview["flavor"].str.split(", ").explode().dropna().unique())
-    ailments = ["Any"] + sorted(df_preview["ailment"].str.split(", ").explode().dropna().unique())
-    breeders = ["Any"] + sorted(df_preview["breeder"].dropna().unique())
-    locations = ["Any"] + sorted(df_preview["location"].dropna().unique())
+    all_effects = sorted(df_preview["effects"].str.split(", ").explode().dropna().unique())
+    all_flavors = sorted(df_preview["flavor"].str.split(", ").explode().dropna().unique())
+    all_ailments = sorted(df_preview["ailment"].str.split(", ").explode().dropna().unique())
+    all_breeders = sorted(df_preview["breeder"].dropna().unique())
+    all_locations = sorted(df_preview["location"].dropna().unique())
 
     # Sidebar filters
     st.sidebar.header("🔎 Filter Strains")
     selected_name = st.sidebar.selectbox("Strain Name", strain_names)
     selected_type = st.sidebar.selectbox("Strain Type", strain_types)
-    selected_effect = st.sidebar.selectbox("Desired Effect", effect_choices)
-    selected_flavor = st.sidebar.selectbox("Flavor", flavors)
-    selected_ailment = st.sidebar.selectbox("Ailment", ailments)
-    selected_breeder = st.sidebar.selectbox("Breeder", breeders)
-    selected_location = st.sidebar.selectbox("Location", locations)
+    selected_effects = st.sidebar.multiselect("Desired Effects", all_effects)
+    selected_flavors = st.sidebar.multiselect("Flavors", all_flavors)
+    selected_ailments = st.sidebar.multiselect("Ailments", all_ailments)
+    selected_breeders = st.sidebar.multiselect("Breeders", all_breeders)
+    selected_locations = st.sidebar.multiselect("Locations", all_locations)
     thc_range = st.sidebar.slider("THC % Range", 0.0, 40.0, (0.0, 25.0))
-
     sort_by = st.sidebar.selectbox("Sort by Potency", ["None", "Highest THC", "Highest CBD"])
     search = st.sidebar.button("🔍 Search")
 
@@ -88,16 +85,19 @@ def main():
             filtered_df = filtered_df[filtered_df["name"] == selected_name]
         if selected_type != "Any":
             filtered_df = filtered_df[filtered_df["type"] == selected_type]
-        if selected_effect != "Any":
-            filtered_df = filtered_df[filtered_df["effects"].str.contains(selected_effect, case=False, na=False)]
-        if selected_flavor != "Any":
-            filtered_df = filtered_df[filtered_df["flavor"].str.contains(selected_flavor, case=False, na=False)]
-        if selected_ailment != "Any":
-            filtered_df = filtered_df[filtered_df["ailment"].str.contains(selected_ailment, case=False, na=False)]
-        if selected_breeder != "Any":
-            filtered_df = filtered_df[filtered_df["breeder"] == selected_breeder]
-        if selected_location != "Any":
-            filtered_df = filtered_df[filtered_df["location"] == selected_location]
+        if selected_effects:
+            for eff in selected_effects:
+                filtered_df = filtered_df[filtered_df["effects"].str.contains(eff, case=False, na=False)]
+        if selected_flavors:
+            for flav in selected_flavors:
+                filtered_df = filtered_df[filtered_df["flavor"].str.contains(flav, case=False, na=False)]
+        if selected_ailments:
+            for ail in selected_ailments:
+                filtered_df = filtered_df[filtered_df["ailment"].str.contains(ail, case=False, na=False)]
+        if selected_breeders:
+            filtered_df = filtered_df[filtered_df["breeder"].isin(selected_breeders)]
+        if selected_locations:
+            filtered_df = filtered_df[filtered_df["location"].isin(selected_locations)]
 
         filtered_df = filtered_df[
             (filtered_df["thc"].fillna(0.0) >= thc_range[0]) &
