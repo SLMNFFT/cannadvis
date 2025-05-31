@@ -11,7 +11,7 @@ st.set_page_config(page_title="Cannabis Strain Explorer", layout="wide")
 st.markdown("""
     <style>
     .stApp {
-        background-image: url("https://i.imgur.com/YOUR_IMAGE_ID.png");
+        background-image: url("https://imgur.com/a/fGP7IhQ");
         background-size: cover;
         background-attachment: fixed;
         background-position: center;
