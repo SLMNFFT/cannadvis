@@ -11,7 +11,7 @@ st.set_page_config(page_title="Cannabis Strain Explorer", layout="wide")
 st.markdown("""
     <style>
     body {
-        background-image: url('https://images.unsplash.com/photo-1610563166159-0a89c0fd09a1'); /* Replace with your own */
+        background-image: url('hanfblatt.png.png'); /* Replace with your own */
         background-size: cover;
         background-attachment: fixed;
         background-position: center;
