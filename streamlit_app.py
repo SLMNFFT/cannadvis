@@ -124,7 +124,6 @@ if search:
             st.markdown("----")
             cols = st.columns([1, 2])
             with cols[0]:
-                # Load image from dataset or fallback to online
                 image_url = row["image"]
                 if not image_url or not image_url.startswith("http"):
                     image_url = fetch_image_online(row["name"]) or ""
@@ -148,6 +147,25 @@ if search:
             with cols[1]:
                 st.markdown(f"### {row['name']}")
                 st.markdown(row.get('description', 'No description available.'))
+
+                if pd.notna(row["thc"]) and pd.notna(row["cbd"]):
+                    chart_data = pd.DataFrame({
+                        "Compound": ["THC", "CBD"],
+                        "Percentage": [row["thc"], row["cbd"]]
+                    })
+                    fig = px.bar(
+                        chart_data,
+                        x="Compound",
+                        y="Percentage",
+                        title="THC vs CBD Content",
+                        color="Compound",
+                        color_discrete_map={"THC": "#4CAF50", "CBD": "#2196F3"},
+                        height=250
+                    )
+                    fig.update_layout(showlegend=False, yaxis_range=[0, 40])
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.info("No THC/CBD data available.")
 
     st.caption("📄 Powered by `strains.csv` + DuckDuckGo | Built with ❤️ in Streamlit")
 else:
