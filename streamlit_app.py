@@ -10,21 +10,21 @@ st.set_page_config(page_title="Cannabis Strain Explorer", layout="wide")
 # Inject custom CSS for background and UI styling
 st.markdown("""
     <style>
-    body {
-        background-image: url('https://imgur.com/a/fGP7IhQ'); /* Replace with your own */
+    .stApp {
+        background-image: url("https://i.imgur.com/YOUR_IMAGE_ID.png");
         background-size: cover;
         background-attachment: fixed;
         background-position: center;
         background-repeat: no-repeat;
     }
-    .stApp {
-        background-color: rgba(255, 255, 255, 0.5);
-        border-radius: 12px;
-        padding: 2rem;
-        margin: 1rem;
+    .stApp > header, .stApp > footer {
+        background: transparent;
     }
     .block-container {
-        padding-top: 2rem;
+        background-color: rgba(255, 255, 255, 0.85);
+        padding: 2rem;
+        border-radius: 12px;
+        margin: 2rem;
     }
     h1 {
         color: #2E8B57;
@@ -47,6 +47,7 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
+
 
 st.title("🌇 Cannadvis BETA")
 
