@@ -194,7 +194,6 @@ def main():
                     if yt_url.startswith("https://www.youtube.com/") or yt_url.startswith("https://youtu.be/"):
                         st.video(yt_url)
 
-                    # THC gauge
                     thc_fig = go.Figure(go.Indicator(
                         mode="gauge+number",
                         value=row["thc"] or 0,
@@ -211,7 +210,7 @@ def main():
                             ],
                         }
                     ))
-                    st.plotly_chart(thc_fig, use_container_width=True)
+                    st.plotly_chart(thc_fig, use_container_width=True, key=f"thc_gauge_{idx}")
 
                     # CBD gauge
                     cbd_fig = go.Figure(go.Indicator(
@@ -230,7 +229,7 @@ def main():
                             ],
                         }
                     ))
-                    st.plotly_chart(cbd_fig, use_container_width=True)
+                    st.plotly_chart(cbd_fig, use_container_width=True, key=f"cbd_gauge_{idx}")
 
         # Favorites list in sidebar
         st.sidebar.header("❤️ Favorites")
