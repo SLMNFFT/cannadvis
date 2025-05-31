@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 from duckduckgo_search import DDGS
 
 st.set_page_config(page_title="Cannabis Strain Explorer", layout="wide")
-st.title("🌇 Cannadvis BETA")
+st.title("CANNADVIS your Mood Adviser")
 
 @st.cache_data
 def load_data():
