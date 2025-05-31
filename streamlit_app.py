@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 from duckduckgo_search import DDGS
 
 st.set_page_config(page_title="Cannabis Strain Explorer", layout="wide")
@@ -65,6 +64,64 @@ translations = {
         "no_image": "🖼️ Aucune image disponible.",
         "no_desc": "Pas de description disponible.",
         "choose_lang": "🌐 Choisir la langue"
+    },
+    "de": {
+        "filter": "🔎 Sortiere Sorten",
+        "strain_name": "Sortenname",
+        "strain_type": "Sorte Typ",
+        "desired_effects": "Gewünschte Effekte",
+        "flavors": "Aromen",
+        "ailments": "Beschwerden",
+        "breeders": "Züchter",
+        "locations": "Standorte",
+        "thc_range": "THC %-Bereich",
+        "sort_by": "Nach Potenz sortieren",
+        "search": "🔍 Suchen",
+        "no_results": "Keine passenden Sorten gefunden.",
+        "matching_strains": "🧾 Passende Sorten",
+        "add_favorite": "♡ Zu Favoriten hinzufügen",
+        "remove_favorite": "❤️ Aus Favoriten entfernen",
+        "your_notes": "Deine Notizen",
+        "save_note": "Notiz speichern",
+        "note_saved": "Notiz gespeichert!",
+        "favorites": "❤️ Favoriten",
+        "no_favorites": "Noch keine Favoriten.",
+        "thc_label": "THC %",
+        "cbd_label": "CBD %",
+        "effects_chart_title": "📊 Effektverteilung nach Sortentyp",
+        "no_effect_data": "Keine Effekt-Daten verfügbar.",
+        "no_image": "🖼️ Kein Bild verfügbar.",
+        "no_desc": "Keine Beschreibung verfügbar.",
+        "choose_lang": "🌐 Sprache wählen"
+    },
+    "es": {
+        "filter": "🔎 Filtrar cepas",
+        "strain_name": "Nombre de la cepa",
+        "strain_type": "Tipo de cepa",
+        "desired_effects": "Efectos deseados",
+        "flavors": "Sabores",
+        "ailments": "Afecciones",
+        "breeders": "Criadores",
+        "locations": "Ubicaciones",
+        "thc_range": "Rango de THC %",
+        "sort_by": "Ordenar por potencia",
+        "search": "🔍 Buscar",
+        "no_results": "No se encontraron cepas coincidentes.",
+        "matching_strains": "🧾 Cepas coincidentes",
+        "add_favorite": "♡ Añadir a favoritos",
+        "remove_favorite": "❤️ Quitar de favoritos",
+        "your_notes": "Tus notas",
+        "save_note": "Guardar nota",
+        "note_saved": "¡Nota guardada!",
+        "favorites": "❤️ Favoritos",
+        "no_favorites": "No hay favoritos aún.",
+        "thc_label": "THC %",
+        "cbd_label": "CBD %",
+        "effects_chart_title": "📊 Distribución de efectos por tipo de cepa",
+        "no_effect_data": "No hay datos de efectos disponibles.",
+        "no_image": "🖼️ No hay imagen disponible.",
+        "no_desc": "No hay descripción disponible.",
+        "choose_lang": "🌐 Elegir idioma"
     }
 }
 
@@ -107,19 +164,23 @@ def save_note(strain_name, note):
     st.session_state.notes[strain_name] = note
 
 def main():
-    # --- Initialize session state ---
     if "favorites" not in st.session_state:
         st.session_state.favorites = set()
     if "notes" not in st.session_state:
         st.session_state.notes = {}
 
-    # Language selection at the top
+    # Language selector with all languages
     lang = st.selectbox(
-        translations["en"]["choose_lang"],
-        options=["en", "fr"],
-        index=0
+        "🌐 Language / Sprache / Langue / Idioma",
+        options=["en", "fr", "de", "es"],
+        format_func=lambda x: {
+            "en": "English 🇬🇧",
+            "fr": "Français 🇫🇷",
+            "de": "Deutsch 🇩🇪",
+            "es": "Español 🇪🇸"
+        }[x],
+        index=0,
     )
-
     t = translations[lang]
 
     st.title("🌇 Cannadvis BETA")
@@ -137,7 +198,6 @@ def main():
     all_breeders = sorted(df_preview["breeder"].dropna().unique())
     all_locations = sorted(df_preview["location"].dropna().unique())
 
-    # Sidebar filters with translations
     st.sidebar.header(t["filter"])
     selected_name = st.sidebar.selectbox(t["strain_name"], strain_names)
     selected_type = st.sidebar.selectbox(t["strain_type"], strain_types)
@@ -171,10 +231,8 @@ def main():
             filtered_df = filtered_df[filtered_df["breeder"].isin(selected_breeders)]
         if selected_locations:
             filtered_df = filtered_df[filtered_df["location"].isin(selected_locations)]
-
         filtered_df = filtered_df[
-            (filtered_df["thc"].fillna(0.0) >= thc_range[0]) &
-            (filtered_df["thc"].fillna(0.0) <= thc_range[1])
+            (filtered_df["thc"] >= thc_range[0]) & (filtered_df["thc"] <= thc_range[1])
         ]
 
         if sort_by == "Highest THC":
@@ -182,68 +240,47 @@ def main():
         elif sort_by == "Highest CBD":
             filtered_df = filtered_df.sort_values(by="cbd", ascending=False)
 
-        # Effects Chart
-        st.subheader(t["effects_chart_title"])
-        expanded = filtered_df[["type", "effects"]].assign(effects=filtered_df["effects"].str.split(", ")).explode("effects")
-        expanded = expanded.dropna()
-        if not expanded.empty:
-            counts = expanded.groupby(["type", "effects"]).size().reset_index(name="count").sort_values(by="count", ascending=False)
-            fig = px.bar(
-                counts,
-                x="effects",
-                y="count",
-                color="type",
-                barmode="group",
-                title=t["effects_chart_title"],
-                labels={"effects": t["desired_effects"], "count": "Count", "type": t["strain_type"]},
-                height=500,
-            )
-            fig.update_layout(xaxis_tickangle=-45)
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.info(t["no_effect_data"])
-
-        # Matching strains
-        st.subheader(t["matching_strains"])
         if filtered_df.empty:
             st.warning(t["no_results"])
-        else:
-            for idx, row in filtered_df.iterrows():
-                st.markdown("----")
-                cols = st.columns([1, 3])
+            return
 
-                with cols[0]:
-                    img_url = row["image"]
-                    if not img_url:
-                        img_url = fetch_image_online(row["name"]) or ""
-                    if img_url:
-                        st.image(img_url, use_column_width=True, caption=row["name"])
-                    else:
-                        st.write(t["no_image"])
+        st.subheader(f"{t['matching_strains']} ({len(filtered_df)})")
 
-                with cols[1]:
-                    st.markdown(f"### {row['name']} ({row['type']})")
-                    desc = row.get("description", "")
-                    if not desc:
-                        desc = t["no_desc"]
-                    st.write(desc)
+        for idx, row in filtered_df.iterrows():
+            cols = st.columns([1, 3])
 
-                    st.write(f"**{t['thc_label']}:** {row['thc'] or 'N/A'}%")
-                    st.write(f"**{t['cbd_label']}:** {row['cbd'] or 'N/A'}%")
+            with cols[0]:
+                img_url = row["image"]
+                if not img_url:
+                    img_url = fetch_image_online(row["name"]) or ""
+                if img_url:
+                    st.image(img_url, use_column_width=True, caption=row["name"])
+                else:
+                    st.write(t["no_image"])
 
-                    # Favorite button
-                    if row["name"] in st.session_state.favorites:
-                        if st.button(t["remove_favorite"], key=f"fav_remove_{idx}"):
-                            toggle_favorite(row["name"])
-                    else:
-                        if st.button(t["add_favorite"], key=f"fav_add_{idx}"):
-                            toggle_favorite(row["name"])
+            with cols[1]:
+                st.markdown(f"### {row['name']} ({row['type']})")
+                desc = row.get("description", "")
+                if not desc:
+                    desc = t["no_desc"]
+                st.write(desc)
 
-                    # Notes
-                    note = st.text_area(t["your_notes"], value=st.session_state.notes.get(row["name"], ""), key=f"note_{idx}")
-                    if st.button(t["save_note"], key=f"save_note_{idx}"):
-                        save_note(row["name"], note)
-                        st.success(t["note_saved"])
+                st.write(f"**{t['thc_label']}:** {row['thc'] or 'N/A'}%")
+                st.write(f"**{t['cbd_label']}:** {row['cbd'] or 'N/A'}%")
+
+                # Favorite button
+                if row["name"] in st.session_state.favorites:
+                    if st.button(t["remove_favorite"], key=f"fav_remove_{idx}"):
+                        toggle_favorite(row["name"])
+                else:
+                    if st.button(t["add_favorite"], key=f"fav_add_{idx}"):
+                        toggle_favorite(row["name"])
+
+                # Notes
+                note = st.text_area(t["your_notes"], value=st.session_state.notes.get(row["name"], ""), key=f"note_{idx}")
+                if st.button(t["save_note"], key=f"save_note_{idx}"):
+                    save_note(row["name"], note)
+                    st.success(t["note_saved"])
 
         # Show favorites in sidebar
         st.sidebar.markdown("----")
