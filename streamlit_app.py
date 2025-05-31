@@ -4,51 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from duckduckgo_search import DDGS
 
-# Page config
 st.set_page_config(page_title="Cannabis Strain Explorer", layout="wide")
-
-# Inject custom CSS for background and UI styling
-st.markdown("""
-    <style>
-    .stApp {
-        background-image: url("https://imgur.com/a/fGP7IhQ");
-        background-size: cover;
-        background-attachment: fixed;
-        background-position: center;
-        background-repeat: no-repeat;
-    }
-    .stApp > header, .stApp > footer {
-        background: transparent;
-    }
-    .block-container {
-        background-color: rgba(255, 255, 255, 0.85);
-        padding: 2rem;
-        border-radius: 12px;
-        margin: 2rem;
-    }
-    h1 {
-        color: #2E8B57;
-        text-align: center;
-    }
-    .stButton > button {
-        border-radius: 8px;
-        background-color: #228B22;
-        color: white;
-        font-weight: bold;
-        padding: 0.5em 1em;
-    }
-    .stTextArea textarea {
-        background-color: #f5fff5;
-        border: 1px solid #a0cfa0;
-        border-radius: 8px;
-    }
-    .stSidebar {
-        background-color: rgba(255, 255, 255, 0.9);
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-
 st.title("🌇 Cannadvis BETA")
 
 @st.cache_data
@@ -106,6 +62,7 @@ def main():
     all_breeders = sorted(df_preview["breeder"].dropna().unique())
     all_locations = sorted(df_preview["location"].dropna().unique())
 
+    # Sidebar filters
     st.sidebar.header("🔎 Filter Strains")
     selected_name = st.sidebar.selectbox("Strain Name", strain_names)
     selected_type = st.sidebar.selectbox("Strain Type", strain_types)
@@ -145,6 +102,7 @@ def main():
         elif sort_by == "Highest CBD":
             filtered_df = filtered_df.sort_values(by="cbd", ascending=False)
 
+        # Effects Chart
         st.subheader("📊 Effects Distribution by Strain Type")
         expanded = filtered_df[["type", "effects"]].assign(effects=filtered_df["effects"].str.split(", ")).explode("effects").dropna()
         if not expanded.empty:
@@ -164,6 +122,7 @@ def main():
         else:
             st.info("No effect data available.")
 
+        # Matching strains
         st.subheader("🧾 Matching Strains")
         if filtered_df.empty:
             st.warning("No matching strains found.")
@@ -206,7 +165,6 @@ def main():
                     if yt_url.startswith("https://www.youtube.com/") or yt_url.startswith("https://youtu.be/"):
                         st.video(yt_url)
 
-                    # Gauges
                     thc_val = row["thc"] if pd.notna(row["thc"]) else 0
                     cbd_val = row["cbd"] if pd.notna(row["cbd"]) else 0
 
@@ -248,6 +206,7 @@ def main():
                     ))
                     st.plotly_chart(cbd_fig, use_container_width=True, key=f"cbd_gauge_{idx}")
 
+        # Sidebar: Favorites
         st.sidebar.header("❤️ Favorites")
         if st.session_state.favorites:
             for fav_strain in sorted(st.session_state.favorites):
