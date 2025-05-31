@@ -15,10 +15,12 @@ def load_data():
     df['effects'] = df['effects'].fillna('')
     df['image'] = df['image'].fillna('')
     df['type'] = df['type'].fillna('Unknown')
-    for col in ['flavor', 'ailment', 'breeder', 'location', 'description', 'id']:
+    for col in ['flavor', 'ailment', 'breeder', 'location']:
         if col not in df.columns:
             df[col] = ''
         df[col] = df[col].fillna('')
+    df['description'] = df.get('description', pd.Series([''] * len(df))).fillna('')
+    df['youtube'] = df.get('youtube', pd.Series([''] * len(df))).fillna('')
     return df
 
 @st.cache_data(show_spinner=False)
@@ -33,23 +35,6 @@ def fetch_image_online(query):
     except Exception:
         return None
     return None
-
-@st.cache_data(show_spinner=False)
-def ddgs_videos(query):
-    # Search videos on DuckDuckGo and return list of video results
-    try:
-        with DDGS() as ddgs:
-            results = ddgs.videos(query, max_results=3)
-            return list(results)
-    except Exception:
-        return []
-
-# Initialize favorites and notes in session state
-if "favorites" not in st.session_state:
-    st.session_state.favorites = {}
-
-if "notes" not in st.session_state:
-    st.session_state.notes = {}
 
 try:
     df_preview = load_data()
@@ -80,18 +65,20 @@ thc_range = st.sidebar.slider("THC % Range", 0.0, 40.0, (0.0, 25.0))
 sort_by = st.sidebar.selectbox("Sort by Potency", ["None", "Highest THC", "Highest CBD"])
 search = st.sidebar.button("🔍 Search")
 
-def recommend_strains(df, base_strain, max_recs=5):
-    # Recommend strains of the same type and close THC value ±5%
-    if base_strain.empty:
-        return pd.DataFrame()
-    base_type = base_strain["type"].values[0]
-    base_thc = base_strain["thc"].values[0]
-    recs = df[
-        (df["type"] == base_type) &
-        (df["name"] != base_strain["name"].values[0]) &
-        (df["thc"].between(base_thc - 5, base_thc + 5))
-    ]
-    return recs.head(max_recs)
+# Favorites & Notes state management with session_state
+if "favorites" not in st.session_state:
+    st.session_state.favorites = set()
+if "notes" not in st.session_state:
+    st.session_state.notes = {}
+
+def toggle_favorite(strain_name):
+    if strain_name in st.session_state.favorites:
+        st.session_state.favorites.remove(strain_name)
+    else:
+        st.session_state.favorites.add(strain_name)
+
+def save_note(strain_name, note):
+    st.session_state.notes[strain_name] = note
 
 if search:
     df = load_data()
@@ -151,21 +138,21 @@ if search:
     if filtered_df.empty:
         st.warning("No matching strains found.")
     else:
-        for _, row in filtered_df.iterrows():
+        for idx, row in filtered_df.iterrows():
             st.markdown("----")
-            cols = st.columns([1, 2])
+            cols = st.columns([1, 3])  # Left side smaller for images + gauges, right side for name + description
 
             with cols[0]:
-                # Image + gauges + metadata
+                # Image
                 image_url = row["image"]
                 if not image_url or not image_url.startswith("http"):
                     image_url = fetch_image_online(row["name"]) or ""
                 if image_url:
-                    st.image(image_url, width=200)
+                    st.image(image_url, width=150)
                 else:
                     st.write("🖼️ No image available.")
 
-                # THC gauge meter
+                # THC gauge
                 thc_fig = go.Figure(go.Indicator(
                     mode="gauge+number",
                     value=row["thc"] or 0,
@@ -181,9 +168,9 @@ if search:
                         ],
                     }
                 ))
-                st.plotly_chart(thc_fig, use_container_width=True)
+                st.plotly_chart(thc_fig, use_container_width=True, key=f"thc_{idx}")
 
-                # CBD gauge meter
+                # CBD gauge
                 cbd_fig = go.Figure(go.Indicator(
                     mode="gauge+number",
                     value=row["cbd"] or 0,
@@ -199,8 +186,9 @@ if search:
                         ],
                     }
                 ))
-                st.plotly_chart(cbd_fig, use_container_width=True)
+                st.plotly_chart(cbd_fig, use_container_width=True, key=f"cbd_{idx}")
 
+                # Metadata
                 st.markdown(f"**Type**: {row['type']}")
                 st.markdown(f"**Effects**: {row['effects']}")
                 st.markdown(f"**Flavor**: {row.get('flavor', 'N/A')}")
@@ -208,50 +196,44 @@ if search:
                 st.markdown(f"**Breeder**: {row.get('breeder', 'N/A')}")
                 st.markdown(f"**Location**: {row.get('location', 'N/A')}")
 
-                # Favorite toggle button
-                strain_key = row.get('id', row['name'])
-                fav = st.session_state.favorites.get(strain_key, False)
-                if st.button(f"{'❤️ Remove from' if fav else '🤍 Add to'} Favorites", key=f"fav_{strain_key}"):
-                    st.session_state.favorites[strain_key] = not fav
+                # Favorites button
+                is_fav = row['name'] in st.session_state.favorites
+                if st.button(
+                    ("❤️ Remove from Favorites" if is_fav else "♡ Add to Favorites"),
+                    key=f"fav_{idx}",
+                ):
+                    toggle_favorite(row['name'])
+                    st.experimental_rerun()
 
-                # User notes input
-                note_key = f"note_{strain_key}"
-                note_text = st.session_state.notes.get(note_key, "")
-                note = st.text_area("📝 Your Notes", value=note_text, key=note_key, height=100)
-                st.session_state.notes[note_key] = note
+                # Notes
+                note = st.text_area(
+                    "Your Notes",
+                    value=st.session_state.notes.get(row['name'], ""),
+                    key=f"note_{idx}",
+                    placeholder="Write your notes here...",
+                )
+                if st.button("Save Note", key=f"save_note_{idx}"):
+                    save_note(row['name'], note)
+                    st.success("Note saved!")
 
             with cols[1]:
-                # Strain name and description
                 st.markdown(f"### {row['name']}")
-                st.markdown(row.get('description', 'No description available.'))
-
-                # YouTube review embed
-                query = f"{row['name']} cannabis strain review site:youtube.com"
-                videos = ddgs_videos(query)
-                if videos:
-                    video_url = videos[0].get('url', None)
-                    if video_url:
-                        st.video(video_url)
+                desc = row.get("description", "")
+                if desc:
+                    st.write(desc)
                 else:
-                    st.info("No YouTube reviews found.")
+                    st.info("No description available.")
 
-            # Show strain recommendations below each strain
-            st.markdown("---")
-            st.markdown("#### Recommended Similar Strains")
-            recs = recommend_strains(df, filtered_df.loc[filtered_df['name'] == row['name']])
-            if not recs.empty:
-                rec_cols = st.columns(len(recs))
-                for i, (_, rec) in enumerate(recs.iterrows()):
-                    with rec_cols[i]:
-                        st.markdown(f"**{rec['name']}**")
-                        img_url = rec['image'] or fetch_image_online(rec['name']) or ""
-                        if img_url:
-                            st.image(img_url, width=100)
-                        st.markdown(f"THC: {rec['thc']}%, CBD: {rec['cbd']}%")
-            else:
-                st.write("No recommendations available.")
+                # YouTube embedding (if valid URL present)
+                yt_url = row.get("youtube", "")
+                if yt_url.startswith("https://www.youtube.com/") or yt_url.startswith("https://youtu.be/"):
+                    st.video(yt_url)
 
-    st.caption("📄 Powered by `strains.csv` + DuckDuckGo | Built with ❤️ in Streamlit")
-
+    # Show favorites if any
+    if st.session_state.favorites:
+        st.sidebar.header("❤️ Favorites")
+        for fav_name in st.session_state.favorites:
+            st.sidebar.write(fav_name)
 else:
-    st.info("Use the filters in the sidebar and click **Search** to explore cannabis strains.")
+    st.info("Please use the sidebar filters and click 🔍 Search to find strains.")
+
