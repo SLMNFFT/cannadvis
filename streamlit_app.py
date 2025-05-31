@@ -1,129 +1,11 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 from duckduckgo_search import DDGS
 
 st.set_page_config(page_title="Cannabis Strain Explorer", layout="wide")
-
-# 🌍 UI Translations
-translations = {
-    "en": {
-        "filter": "🔎 Filter Strains",
-        "strain_name": "Strain Name",
-        "strain_type": "Strain Type",
-        "desired_effects": "Desired Effects",
-        "flavors": "Flavors",
-        "ailments": "Ailments",
-        "breeders": "Breeders",
-        "locations": "Locations",
-        "thc_range": "THC % Range",
-        "sort_by": "Sort by Potency",
-        "search": "🔍 Search",
-        "no_results": "No matching strains found.",
-        "matching_strains": "🧾 Matching Strains",
-        "add_favorite": "♡ Add to Favorites",
-        "remove_favorite": "❤️ Remove from Favorites",
-        "your_notes": "Your Notes",
-        "save_note": "Save Note",
-        "note_saved": "Note saved!",
-        "favorites": "❤️ Favorites",
-        "no_favorites": "No favorites yet.",
-        "thc_label": "THC %",
-        "cbd_label": "CBD %",
-        "effects_chart_title": "📊 Effects Distribution by Strain Type",
-        "no_effect_data": "No effect data available.",
-        "no_image": "🖼️ No image available.",
-        "no_desc": "No description available.",
-        "choose_lang": "🌐 Choose Language"
-    },
-    "fr": {
-        "filter": "🔎 Filtrer les variétés",
-        "strain_name": "Nom de la variété",
-        "strain_type": "Type de variété",
-        "desired_effects": "Effets recherchés",
-        "flavors": "Saveurs",
-        "ailments": "Maux soulagés",
-        "breeders": "Éleveurs",
-        "locations": "Origines",
-        "thc_range": "Plage de THC %",
-        "sort_by": "Trier par puissance",
-        "search": "🔍 Rechercher",
-        "no_results": "Aucune variété correspondante trouvée.",
-        "matching_strains": "🧾 Variétés correspondantes",
-        "add_favorite": "♡ Ajouter aux favoris",
-        "remove_favorite": "❤️ Retirer des favoris",
-        "your_notes": "Vos notes",
-        "save_note": "Enregistrer la note",
-        "note_saved": "Note enregistrée !",
-        "favorites": "❤️ Favoris",
-        "no_favorites": "Aucun favori pour l’instant.",
-        "thc_label": "THC %",
-        "cbd_label": "CBD %",
-        "effects_chart_title": "📊 Répartition des effets par type de variété",
-        "no_effect_data": "Aucune donnée sur les effets disponible.",
-        "no_image": "🖼️ Aucune image disponible.",
-        "no_desc": "Pas de description disponible.",
-        "choose_lang": "🌐 Choisir la langue"
-    },
-    "de": {
-        "filter": "🔎 Sortiere Sorten",
-        "strain_name": "Sortenname",
-        "strain_type": "Sorte Typ",
-        "desired_effects": "Gewünschte Effekte",
-        "flavors": "Aromen",
-        "ailments": "Beschwerden",
-        "breeders": "Züchter",
-        "locations": "Standorte",
-        "thc_range": "THC %-Bereich",
-        "sort_by": "Nach Potenz sortieren",
-        "search": "🔍 Suchen",
-        "no_results": "Keine passenden Sorten gefunden.",
-        "matching_strains": "🧾 Passende Sorten",
-        "add_favorite": "♡ Zu Favoriten hinzufügen",
-        "remove_favorite": "❤️ Aus Favoriten entfernen",
-        "your_notes": "Deine Notizen",
-        "save_note": "Notiz speichern",
-        "note_saved": "Notiz gespeichert!",
-        "favorites": "❤️ Favoriten",
-        "no_favorites": "Noch keine Favoriten.",
-        "thc_label": "THC %",
-        "cbd_label": "CBD %",
-        "effects_chart_title": "📊 Effektverteilung nach Sortentyp",
-        "no_effect_data": "Keine Effekt-Daten verfügbar.",
-        "no_image": "🖼️ Kein Bild verfügbar.",
-        "no_desc": "Keine Beschreibung verfügbar.",
-        "choose_lang": "🌐 Sprache wählen"
-    },
-    "es": {
-        "filter": "🔎 Filtrar cepas",
-        "strain_name": "Nombre de la cepa",
-        "strain_type": "Tipo de cepa",
-        "desired_effects": "Efectos deseados",
-        "flavors": "Sabores",
-        "ailments": "Afecciones",
-        "breeders": "Criadores",
-        "locations": "Ubicaciones",
-        "thc_range": "Rango de THC %",
-        "sort_by": "Ordenar por potencia",
-        "search": "🔍 Buscar",
-        "no_results": "No se encontraron cepas coincidentes.",
-        "matching_strains": "🧾 Cepas coincidentes",
-        "add_favorite": "♡ Añadir a favoritos",
-        "remove_favorite": "❤️ Quitar de favoritos",
-        "your_notes": "Tus notas",
-        "save_note": "Guardar nota",
-        "note_saved": "¡Nota guardada!",
-        "favorites": "❤️ Favoritos",
-        "no_favorites": "No hay favoritos aún.",
-        "thc_label": "THC %",
-        "cbd_label": "CBD %",
-        "effects_chart_title": "📊 Distribución de efectos por tipo de cepa",
-        "no_effect_data": "No hay datos de efectos disponibles.",
-        "no_image": "🖼️ No hay imagen disponible.",
-        "no_desc": "No hay descripción disponible.",
-        "choose_lang": "🌐 Elegir idioma"
-    }
-}
+st.title("🌇 Cannadvis BETA")
 
 @st.cache_data
 def load_data():
@@ -134,9 +16,7 @@ def load_data():
     df['image'] = df['image'].fillna('')
     df['type'] = df['type'].fillna('Unknown')
     for col in ['flavor', 'ailment', 'breeder', 'location']:
-        if col not in df.columns:
-            df[col] = ''
-        df[col] = df[col].fillna('')
+        df[col] = df.get(col, pd.Series([''] * len(df))).fillna('')
     df['description'] = df.get('description', pd.Series([''] * len(df))).fillna('')
     df['youtube'] = df.get('youtube', pd.Series([''] * len(df))).fillna('')
     return df
@@ -169,22 +49,6 @@ def main():
     if "notes" not in st.session_state:
         st.session_state.notes = {}
 
-    # Language selector with all languages
-    lang = st.selectbox(
-        "🌐 Language / Sprache / Langue / Idioma",
-        options=["en", "fr", "de", "es"],
-        format_func=lambda x: {
-            "en": "English 🇬🇧",
-            "fr": "Français 🇫🇷",
-            "de": "Deutsch 🇩🇪",
-            "es": "Español 🇪🇸"
-        }[x],
-        index=0,
-    )
-    t = translations[lang]
-
-    st.title("🌇 Cannadvis BETA")
-
     try:
         df_preview = load_data()
     except Exception:
@@ -198,17 +62,18 @@ def main():
     all_breeders = sorted(df_preview["breeder"].dropna().unique())
     all_locations = sorted(df_preview["location"].dropna().unique())
 
-    st.sidebar.header(t["filter"])
-    selected_name = st.sidebar.selectbox(t["strain_name"], strain_names)
-    selected_type = st.sidebar.selectbox(t["strain_type"], strain_types)
-    selected_effects = st.sidebar.multiselect(t["desired_effects"], all_effects)
-    selected_flavors = st.sidebar.multiselect(t["flavors"], all_flavors)
-    selected_ailments = st.sidebar.multiselect(t["ailments"], all_ailments)
-    selected_breeders = st.sidebar.multiselect(t["breeders"], all_breeders)
-    selected_locations = st.sidebar.multiselect(t["locations"], all_locations)
-    thc_range = st.sidebar.slider(t["thc_range"], 0.0, 40.0, (0.0, 25.0))
-    sort_by = st.sidebar.selectbox(t["sort_by"], ["None", "Highest THC", "Highest CBD"])
-    search = st.sidebar.button(t["search"])
+    # Sidebar filters
+    st.sidebar.header("🔎 Filter Strains")
+    selected_name = st.sidebar.selectbox("Strain Name", strain_names)
+    selected_type = st.sidebar.selectbox("Strain Type", strain_types)
+    selected_effects = st.sidebar.multiselect("Desired Effects", all_effects)
+    selected_flavors = st.sidebar.multiselect("Flavors", all_flavors)
+    selected_ailments = st.sidebar.multiselect("Ailments", all_ailments)
+    selected_breeders = st.sidebar.multiselect("Breeders", all_breeders)
+    selected_locations = st.sidebar.multiselect("Locations", all_locations)
+    thc_range = st.sidebar.slider("THC % Range", 0.0, 40.0, (0.0, 25.0))
+    sort_by = st.sidebar.selectbox("Sort by Potency", ["None", "Highest THC", "Highest CBD"])
+    search = st.sidebar.button("🔍 Search")
 
     if search:
         df = load_data()
@@ -218,78 +83,138 @@ def main():
             filtered_df = filtered_df[filtered_df["name"] == selected_name]
         if selected_type != "Any":
             filtered_df = filtered_df[filtered_df["type"] == selected_type]
-        if selected_effects:
-            for eff in selected_effects:
-                filtered_df = filtered_df[filtered_df["effects"].str.contains(eff, case=False, na=False)]
-        if selected_flavors:
-            for flav in selected_flavors:
-                filtered_df = filtered_df[filtered_df["flavor"].str.contains(flav, case=False, na=False)]
-        if selected_ailments:
-            for ail in selected_ailments:
-                filtered_df = filtered_df[filtered_df["ailment"].str.contains(ail, case=False, na=False)]
+        for eff in selected_effects:
+            filtered_df = filtered_df[filtered_df["effects"].str.contains(eff, case=False, na=False)]
+        for flav in selected_flavors:
+            filtered_df = filtered_df[filtered_df["flavor"].str.contains(flav, case=False, na=False)]
+        for ail in selected_ailments:
+            filtered_df = filtered_df[filtered_df["ailment"].str.contains(ail, case=False, na=False)]
         if selected_breeders:
             filtered_df = filtered_df[filtered_df["breeder"].isin(selected_breeders)]
         if selected_locations:
             filtered_df = filtered_df[filtered_df["location"].isin(selected_locations)]
         filtered_df = filtered_df[
-            (filtered_df["thc"] >= thc_range[0]) & (filtered_df["thc"] <= thc_range[1])
+            (filtered_df["thc"].fillna(0.0) >= thc_range[0]) &
+            (filtered_df["thc"].fillna(0.0) <= thc_range[1])
         ]
-
         if sort_by == "Highest THC":
             filtered_df = filtered_df.sort_values(by="thc", ascending=False)
         elif sort_by == "Highest CBD":
             filtered_df = filtered_df.sort_values(by="cbd", ascending=False)
 
-        if filtered_df.empty:
-            st.warning(t["no_results"])
-            return
-
-        st.subheader(f"{t['matching_strains']} ({len(filtered_df)})")
-
-        for idx, row in filtered_df.iterrows():
-            cols = st.columns([1, 3])
-
-            with cols[0]:
-                img_url = row["image"]
-                if not img_url:
-                    img_url = fetch_image_online(row["name"]) or ""
-                if img_url:
-                    st.image(img_url, use_column_width=True, caption=row["name"])
-                else:
-                    st.write(t["no_image"])
-
-            with cols[1]:
-                st.markdown(f"### {row['name']} ({row['type']})")
-                desc = row.get("description", "")
-                if not desc:
-                    desc = t["no_desc"]
-                st.write(desc)
-
-                st.write(f"**{t['thc_label']}:** {row['thc'] or 'N/A'}%")
-                st.write(f"**{t['cbd_label']}:** {row['cbd'] or 'N/A'}%")
-
-                # Favorite button
-                if row["name"] in st.session_state.favorites:
-                    if st.button(t["remove_favorite"], key=f"fav_remove_{idx}"):
-                        toggle_favorite(row["name"])
-                else:
-                    if st.button(t["add_favorite"], key=f"fav_add_{idx}"):
-                        toggle_favorite(row["name"])
-
-                # Notes
-                note = st.text_area(t["your_notes"], value=st.session_state.notes.get(row["name"], ""), key=f"note_{idx}")
-                if st.button(t["save_note"], key=f"save_note_{idx}"):
-                    save_note(row["name"], note)
-                    st.success(t["note_saved"])
-
-        # Show favorites in sidebar
-        st.sidebar.markdown("----")
-        st.sidebar.subheader(t["favorites"])
-        if st.session_state.favorites:
-            for fav in sorted(st.session_state.favorites):
-                st.sidebar.markdown(f"- {fav}")
+        # Effects Chart
+        st.subheader("📊 Effects Distribution by Strain Type")
+        expanded = filtered_df[["type", "effects"]].assign(effects=filtered_df["effects"].str.split(", ")).explode("effects").dropna()
+        if not expanded.empty:
+            counts = expanded.groupby(["type", "effects"]).size().reset_index(name="count").sort_values(by="count", ascending=False)
+            fig = px.bar(
+                counts,
+                x="effects",
+                y="count",
+                color="type",
+                barmode="group",
+                title="Effect Counts by Strain Type",
+                labels={"effects": "Effect", "count": "Count", "type": "Strain Type"},
+                height=500,
+            )
+            fig.update_layout(xaxis_tickangle=-45)
+            st.plotly_chart(fig, use_container_width=True)
         else:
-            st.sidebar.info(t["no_favorites"])
+            st.info("No effect data available.")
+
+        # Matching strains
+        st.subheader("🧾 Matching Strains")
+        if filtered_df.empty:
+            st.warning("No matching strains found.")
+        else:
+            for idx, row in filtered_df.iterrows():
+                st.markdown("----")
+                cols = st.columns([1, 3])
+
+                with cols[0]:
+                    image_url = row["image"]
+                    if not image_url or not image_url.startswith("http"):
+                        image_url = fetch_image_online(row["name"]) or ""
+                    if image_url:
+                        st.image(image_url, width=150)
+                    else:
+                        st.write("🖼️ No image available.")
+                    st.markdown(f"**Type**: {row['type']}")
+                    st.markdown(f"**Effects**: {row['effects']}")
+                    st.markdown(f"**Flavor**: {row.get('flavor', 'N/A')}")
+                    st.markdown(f"**Ailments**: {row.get('ailment', 'N/A')}")
+                    st.markdown(f"**Breeder**: {row.get('breeder', 'N/A')}")
+                    st.markdown(f"**Location**: {row.get('location', 'N/A')}")
+
+                    is_fav = row['name'] in st.session_state.favorites
+                    if st.button("❤️ Remove from Favorites" if is_fav else "♡ Add to Favorites", key=f"fav_{idx}"):
+                        toggle_favorite(row['name'])
+                        st.experimental_rerun()
+
+                    note = st.text_area("Your Notes", value=st.session_state.notes.get(row['name'], ""), key=f"note_{idx}")
+                    if st.button("Save Note", key=f"save_note_{idx}"):
+                        save_note(row['name'], note)
+                        st.success("Note saved!")
+
+                with cols[1]:
+                    st.markdown(f"### {row['name']}")
+                    desc = row.get("description", "")
+                    st.write(desc if desc else "No description available.")
+
+                    yt_url = row.get("youtube", "")
+                    if yt_url.startswith("https://www.youtube.com/") or yt_url.startswith("https://youtu.be/"):
+                        st.video(yt_url)
+
+                    thc_val = row["thc"] if pd.notna(row["thc"]) else 0
+                    cbd_val = row["cbd"] if pd.notna(row["cbd"]) else 0
+
+                    # THC Gauge
+                    thc_fig = go.Figure(go.Indicator(
+                        mode="gauge+number",
+                        value=thc_val,
+                        title={'text': "THC %"},
+                        domain={'x': [0, 1], 'y': [0, 1]},
+                        gauge={
+                            'axis': {'range': [0, 40]},
+                            'bar': {'color': "green"},
+                            'steps': [
+                                {'range': [0, 10], 'color': "#D3F9D8"},
+                                {'range': [10, 20], 'color': "#A1D99B"},
+                                {'range': [20, 30], 'color': "#31A354"},
+                                {'range': [30, 40], 'color': "#006D2C"},
+                            ],
+                        }
+                    ))
+                    st.plotly_chart(thc_fig, use_container_width=True, key=f"thc_gauge_{idx}")
+
+                    # CBD Gauge
+                    cbd_fig = go.Figure(go.Indicator(
+                        mode="gauge+number",
+                        value=cbd_val,
+                        title={'text': "CBD %"},
+                        domain={'x': [0, 1], 'y': [0, 1]},
+                        gauge={
+                            'axis': {'range': [0, 20]},
+                            'bar': {'color': "blue"},
+                            'steps': [
+                                {'range': [0, 5], 'color': "#D0E1F9"},
+                                {'range': [5, 10], 'color': "#74A9CF"},
+                                {'range': [10, 15], 'color': "#2B5788"},
+                                {'range': [15, 20], 'color': "#08306B"},
+                            ],
+                        }
+                    ))
+                    st.plotly_chart(cbd_fig, use_container_width=True, key=f"cbd_gauge_{idx}")
+
+        # Sidebar: Favorites
+        st.sidebar.header("❤️ Favorites")
+        if st.session_state.favorites:
+            for fav_strain in sorted(st.session_state.favorites):
+                st.sidebar.write(fav_strain)
+        else:
+            st.sidebar.write("No favorites yet.")
+    else:
+        st.info("Please use the sidebar filters and click 🔍 Search to find strains.")
 
 if __name__ == "__main__":
     main()
