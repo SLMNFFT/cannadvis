@@ -62,7 +62,6 @@ def main():
     all_breeders = sorted(df_preview["breeder"].dropna().unique())
     all_locations = sorted(df_preview["location"].dropna().unique())
 
-    # Sidebar filters
     st.sidebar.header("🔎 Filter Strains")
     selected_name = st.sidebar.selectbox("Strain Name", strain_names)
     selected_type = st.sidebar.selectbox("Strain Type", strain_types)
@@ -102,7 +101,6 @@ def main():
         elif sort_by == "Highest CBD":
             filtered_df = filtered_df.sort_values(by="cbd", ascending=False)
 
-        # Effects Chart
         st.subheader("📊 Effects Distribution by Strain Type")
         expanded = filtered_df[["type", "effects"]].assign(effects=filtered_df["effects"].str.split(", ")).explode("effects").dropna()
         if not expanded.empty:
@@ -122,41 +120,16 @@ def main():
         else:
             st.info("No effect data available.")
 
-        # Matching strains
         st.subheader("🧾 Matching Strains")
         if filtered_df.empty:
             st.warning("No matching strains found.")
         else:
             for idx, row in filtered_df.iterrows():
                 st.markdown("----")
-                cols = st.columns([1, 3])
+                cols = st.columns([3, 1])  # Swapped column ratios
 
+                # Column 1 (previously 2): strain name, desc, video, gauges
                 with cols[0]:
-                    image_url = row["image"]
-                    if not image_url or not image_url.startswith("http"):
-                        image_url = fetch_image_online(row["name"]) or ""
-                    if image_url:
-                        st.image(image_url, width=150)
-                    else:
-                        st.write("🖼️ No image available.")
-                    st.markdown(f"**Type**: {row['type']}")
-                    st.markdown(f"**Effects**: {row['effects']}")
-                    st.markdown(f"**Flavor**: {row.get('flavor', 'N/A')}")
-                    st.markdown(f"**Ailments**: {row.get('ailment', 'N/A')}")
-                    st.markdown(f"**Breeder**: {row.get('breeder', 'N/A')}")
-                    st.markdown(f"**Location**: {row.get('location', 'N/A')}")
-
-                    is_fav = row['name'] in st.session_state.favorites
-                    if st.button("❤️ Remove from Favorites" if is_fav else "♡ Add to Favorites", key=f"fav_{idx}"):
-                        toggle_favorite(row['name'])
-                        st.experimental_rerun()
-
-                    note = st.text_area("Your Notes", value=st.session_state.notes.get(row['name'], ""), key=f"note_{idx}")
-                    if st.button("Save Note", key=f"save_note_{idx}"):
-                        save_note(row['name'], note)
-                        st.success("Note saved!")
-
-                with cols[1]:
                     st.markdown(f"### {row['name']}")
                     desc = row.get("description", "")
                     st.write(desc if desc else "No description available.")
@@ -206,7 +179,32 @@ def main():
                     ))
                     st.plotly_chart(cbd_fig, use_container_width=True, key=f"cbd_gauge_{idx}")
 
-        # Sidebar: Favorites
+                # Column 2 (previously 1): image and metadata
+                with cols[1]:
+                    image_url = row["image"]
+                    if not image_url or not image_url.startswith("http"):
+                        image_url = fetch_image_online(row["name"]) or ""
+                    if image_url:
+                        st.image(image_url, width=150)
+                    else:
+                        st.write("🖼️ No image available.")
+                    st.markdown(f"**Type**: {row['type']}")
+                    st.markdown(f"**Effects**: {row['effects']}")
+                    st.markdown(f"**Flavor**: {row.get('flavor', 'N/A')}")
+                    st.markdown(f"**Ailments**: {row.get('ailment', 'N/A')}")
+                    st.markdown(f"**Breeder**: {row.get('breeder', 'N/A')}")
+                    st.markdown(f"**Location**: {row.get('location', 'N/A')}")
+
+                    is_fav = row['name'] in st.session_state.favorites
+                    if st.button("❤️ Remove from Favorites" if is_fav else "♡ Add to Favorites", key=f"fav_{idx}"):
+                        toggle_favorite(row['name'])
+                        st.experimental_rerun()
+
+                    note = st.text_area("Your Notes", value=st.session_state.notes.get(row['name'], ""), key=f"note_{idx}")
+                    if st.button("Save Note", key=f"save_note_{idx}"):
+                        save_note(row['name'], note)
+                        st.success("Note saved!")
+
         st.sidebar.header("❤️ Favorites")
         if st.session_state.favorites:
             for fav_strain in sorted(st.session_state.favorites):
@@ -218,4 +216,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
